@@ -197,4 +197,63 @@ component main = IntegerDivide(10);
 ```
 
 ## 第8题 BubbleSort
+```
+pragma circom 2.1.4;
+
+template Compare2(nbits) {
+    signal input in[2];
+    signal output min;
+    signal output max;
+
+    component lt = LessThan(nbits);
+    lt.in <== in;
+    min <== in[1] + (in[0] - in[1]) * lt.out;
+    max <== in[0] + (in[1] - in[0]) * lt.out;
+}
+
+template BubbleMax(nbits, N, M) {
+    signal input in[N];
+    signal output out[N];
+    assert(M > 0);
+    assert(M <= N);
+
+    for(var i=M; i<N; i++) {
+        out[i] <== in[i];
+    }
+
+    component css[M-1];
+    signal temps[M];
+    temps[0] <-- in[0];
+    for(var i=1; i<M; i++) {
+        css[i-1] = Compare2(nbits);
+        css[i-1].in <== [temps[i-1], in[i]];
+        out[i-1] <== css[i-1].min;
+        temps[i] <-- css[i-1].max;
+    }
+    out[M-1] <== temps[M-1];
+}
+
+
+template BubbleSort(nbits, N) {
+    signal input in[N];
+    signal output out[N];
+    assert(N > 0);
+
+    signal step[N];
+    component bms[N];
+    bms[0] = BubbleMax(nbits, N, N);
+    bms[0].in <== in;
+    for(var i = 1; i < N; i++) {
+        bms[i] = BubbleMax(nbits, N, N-i);
+        bms[i].in <== bms[i-1].out; 
+    }
+    out <== bms[N-1].out;
+}
+
+component main = BubbleSort(10, 2);
+
+/* INPUT = {
+    "in": ["999", "444"]
+} */
+```
 
