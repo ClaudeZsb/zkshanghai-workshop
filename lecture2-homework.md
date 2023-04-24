@@ -102,10 +102,99 @@ component main = Selector(6);
 ```
 
 ## 第5题 IsNegative
+```
+pragma circom 2.1.4;
+
+include "./circomlib/compconstant.circom";
+
+template IsNegative() {
+    signal input in;
+    signal output out;
+
+    component n2b = Num2Bits(254);
+    component comp = CompConstant(10944121435919637611123202872628637544274182200208017171849102093287904247808);
+
+    n2b.in <== in;
+    comp.in <== n2b.out;
+    out <== comp.out;
+}
+
+component main = IsNegative();
+
+/* INPUT = {
+    "in": "10944121435919637611123202872628637544274182200208017171849102093287904248808"
+} */
+```
 
 ## 第6题 LessThan
+```
+pragma circom 2.1.4;
+
+template LessThan(k) {
+    signal input in[2];
+    signal output out;
+    assert(k <= 252);
+
+    // use internal Num2Bits template
+    component n2b = Num2Bits(k + 1);
+    n2b.in <== (1 << k) + in[1] - in[0];
+    out <== n2b.b[k]; 
+}
+
+component main = LessThan(3);
+
+/* INPUT = {
+    "in": ["1", "2"]
+} */
+```
 
 ## 第7题 IntergerDivide
+```
+pragma circom 2.1.4;
+
+include "./circomlib/compconstant.circom";
+
+template IntegerDivide(nbits) {
+    assert(nbits <= 126);
+    signal input dividend;
+    signal input divisor;
+    signal output remainder;
+    signal output quotient;
+
+    component ccs[3];
+    component n2bs[3];
+    for (var i = 0; i < 3; i++) {
+        ccs[i] = CompConstant((1<<126)-1);
+        n2bs[i] = Num2Bits(254);
+    }
+
+    quotient <-- dividend \ divisor;
+    remainder <-- dividend % divisor;
+
+    n2bs[0].in <== dividend;
+    ccs[0].in <== n2bs[0].out;
+    n2bs[1].in <== divisor;
+    ccs[1].in <== n2bs[1].out;
+    n2bs[2].in <== quotient;
+    ccs[2].in <== n2bs[2].out;
+    ccs[0].out === 0;
+    ccs[1].out === 0;
+    ccs[2].out === 0;
+
+    component lt = LessThan(nbits);
+    lt.in <== [remainder, divisor];
+    lt.out === 1;
+
+    dividend === quotient * divisor + remainder;
+}
+
+component main = IntegerDivide(10);
+
+/* INPUT = {
+    "dividend": "333",
+    "divisor": "4"
+} */
+```
 
 ## 第8题 BubbleSort
 
